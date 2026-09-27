@@ -1,4 +1,4 @@
-﻿namespace NET8WebMVC.Domain.Repositories {
+﻿namespace App.Domain.Repositories {
     public interface ILoaderMembers {
         public IEnumerable<Domain.Entities.Member> Load();
     }

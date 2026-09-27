@@ -1,4 +1,4 @@
-namespace NET8WebMVC.Models {
+namespace App.Models {
     public class ErrorViewModel {
         public string? RequestId { get; set; }
 

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NET8WebMVC.Domain.Entities;
+using App.Domain.Entities;
 using System.Collections.Generic;
 
-namespace NET8WebMVC.DB {
+namespace App.DB {
     public class SampleDbContext : DbContext {
         public SampleDbContext(DbContextOptions options): base(options) {
         }

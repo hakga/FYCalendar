@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NET8WebMVC.DB;
-using NET8WebMVC.Domain.Repositories;
+using App.DB;
+using App.Domain.Repositories;
 
-namespace NET8WebMVC.Infrastructures {
+namespace App.Infrastructures {
     public class DBLoaderMembers : ILoaderMembers {
         private readonly SampleDbContext _dbContext;
         public DBLoaderMembers(SampleDbContext context) {

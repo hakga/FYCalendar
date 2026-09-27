@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using NET8WebMVC.DB;
-using NET8WebMVC.Domain.Repositories;
-using NET8WebMVC.Infrastructures;
+using App.DB;
+using App.Domain.Repositories;
+using App.Infrastructures;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace NET8WebMVC.Migrations
+namespace App.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace NET8WebMVC.Domain.Entities {
+namespace App.Domain.Entities {
     public class Member {
         public int Id { get; set; }
         [DisplayName("氏名")]
