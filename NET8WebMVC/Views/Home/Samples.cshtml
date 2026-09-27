@@ -1,0 +1,21 @@
+﻿@model IEnumerable<NET8WebMVC.Domain.Entities.Member>
+
+@{
+    ViewBag.Title = "Samples";
+}
+
+<h1>Samples</h1>
+<table>
+    <tr>
+        <th></th>
+        <th>@Html.DisplayNameFor(model => model.Name)</th>
+        <th>@Html.DisplayNameFor(model => model.Description)</th>
+    </tr>
+    @foreach (var member in Model) {
+        <tr>
+            <td>@member.Id</td>
+            <td>@member.Name</td>
+            <td>@member.Description</td>
+        </tr>
+    }
+</table>
