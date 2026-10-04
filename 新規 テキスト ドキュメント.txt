@@ -1,1 +1,11 @@
 dotnet watch --urls="http://localhost:7777" --project App
+
+App/database/schema/001_initial.sql
+
+$project = ".\App\App.csproj"
+
+dotnet user-secrets init --project $project
+
+dotnet user-secrets set --project $project "ConnectionStrings:AppConnection" "Server=(localdb)\MSSQLLocalDB;Database=AppDev;Trusted_Connection=True;TrustServerCertificate=True"
+
+dotnet ef dbcontext scaffold  "Name=ConnectionStrings:AppConnection"  Microsoft.EntityFrameworkCore.SqlServer  --project .\App\App.csproj  --startup-project .\App\App.csproj  --context AppDbContext  --context-dir Data  --output-dir Data\Entities  --namespace App.Data.Entities  --context-namespace App.Data  --no-onconfiguring  --schema dbo
