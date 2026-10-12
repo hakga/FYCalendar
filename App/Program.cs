@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using App.DB;
-using App.Domain.Repositories;
-using App.Infrastructures;
+using App.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<SampleDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("AppConnection")));
-
-builder.Services.AddTransient<ILoaderMembers, DBLoaderMembers>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("AppConnection")
+        ?? throw new InvalidOperationException(
+            "ConnectionStrings:AppConnection が設定されていません。")));
 
 var app = builder.Build();
 
