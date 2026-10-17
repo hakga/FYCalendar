@@ -1,33 +1,73 @@
-# Database-first workflow
+# Database workflow
 
-The SQL files in this directory are the source of truth for the database schema.
+このプロジェクトは **Code First + EF Core Migrations** でデータベーススキーマを管理する。
 
-## 1. Apply the schema to a development database
+現在の正（Source of Truth）は次のファイルである。
 
-Start SQL Server or LocalDB, then apply `schema/001_initial.sql` to `FYCalendarDev`.
+- `Data/Entities/*.cs`: Entity
+- `Data/AppDbContext.cs`: テーブル、列、キー、インデックス、リレーションの構成
+- `Data/AppDbContext.CheckConstraints.cs`: CHECK制約
+- `Migrations/*.cs`: DB変更履歴とModel Snapshot
+
+`database/legacy`配下のSQLとScaffoldスクリプトは、Data First時代の参照資料である。通常の開発では実行しない。
+
+## 通常の変更手順
+
+以下は`App`ディレクトリで実行する。
+
+1. EntityまたはDbContextの構成を変更する。
+2. Migrationを生成する。
 
 ```powershell
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -Q "IF DB_ID(N'FYCalendarDev') IS NULL CREATE DATABASE [FYCalendarDev]"
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -d FYCalendarDev -i .\database\schema\001_initial.sql
+dotnet tool restore
+
+dotnet tool run dotnet-ef migrations add AddExampleColumn `
+  --project .\App.csproj `
+  --startup-project .\App.csproj `
+  --context AppDbContext
 ```
 
-## 2. Generate the EF Core model
+`AddExampleColumn`は、実際の変更内容を表すMigration名へ置き換える。
 
-Run this from the `App` directory:
+3. 生成されたMigrationの`Up`、`Down`、Model Snapshotをレビューする。
+4. 開発DBへ反映する。
 
 ```powershell
-.\database\scaffold.ps1
+dotnet tool run dotnet-ef database update `
+  --project .\App.csproj `
+  --startup-project .\App.csproj `
+  --context AppDbContext
 ```
 
-The command generates entities under `Data/Entities` and `AppDbContext` under `Data`.
-Do not add business rules or UI properties to generated files.
+5. ビルドとモデル差分を確認する。
 
-## 3. Change workflow
+```powershell
+dotnet build
 
-1. Change `schema/*.sql`.
-2. Apply the change to the development database.
-3. Run `database/scaffold.ps1`.
-4. Review the generated diff.
-5. Hand-write ViewModels, application services, controllers, and views.
+dotnet tool run dotnet-ef migrations has-pending-model-changes `
+  --project .\App.csproj `
+  --startup-project .\App.csproj `
+  --context AppDbContext
+```
 
-This project treats the SQL schema, not EF Core Migrations, as the source of truth.
+`No changes have been made to the model since the last migration.`と表示されれば、モデル変更はMigrationへ記録済みである。
+
+## 現在の基準値
+
+- 業務テーブル: 21
+- CHECK制約: 41
+- 適用済みMigration:
+  - `20261012071744_InitialCreate`
+  - `20261012072636_AddCheckConstraints`
+
+確認SQL:
+
+```powershell
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C `
+  -d FYCalendarDev `
+  -Q "SELECT COUNT(*) AS AppTableCount FROM sys.tables WHERE name <> N'__EFMigrationsHistory'; SELECT COUNT(*) AS CheckConstraintCount FROM sys.check_constraints; SELECT MigrationId FROM dbo.__EFMigrationsHistory ORDER BY MigrationId"
+```
+
+## 移行手順書
+
+Data Firstの既存スキーマをCode Firstへ移行するときは、[DATA_FIRST_TO_CODE_FIRST.md](./DATA_FIRST_TO_CODE_FIRST.md)を参照する。
