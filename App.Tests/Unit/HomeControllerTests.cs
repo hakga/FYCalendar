@@ -9,19 +9,16 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace App.Tests.Unit;
 
 [Trait("Category", "Unit")]
-public sealed class HomeControllerTests
-{
+public sealed class HomeControllerTests {
     [Fact]
-    public void Index_ReturnsView()
-    {
+    public void Indexはビューを返す() {
         var controller = CreateController();
 
         controller.Index().Should().BeOfType<ViewResult>();
     }
 
     [Fact]
-    public void Privacy_PassesConfiguredSettingToView()
-    {
+    public void Privacyは設定値をビューに渡す() {
         var controller = CreateController();
 
         controller.Privacy().Should().BeOfType<ViewResult>();
@@ -29,11 +26,9 @@ public sealed class HomeControllerTests
     }
 
     [Fact]
-    public void Error_IncludesRequestIdentifier()
-    {
+    public void Errorはリクエスト識別子を返す() {
         var controller = CreateController();
-        controller.ControllerContext = new ControllerContext
-        {
+        controller.ControllerContext = new ControllerContext {
             HttpContext = new DefaultHttpContext { TraceIdentifier = "test-request" }
         };
 
@@ -43,11 +38,9 @@ public sealed class HomeControllerTests
             .Which.RequestId.Should().NotBeNullOrEmpty();
     }
 
-    private static HomeController CreateController()
-    {
+    private static HomeController CreateController() {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
+            .AddInMemoryCollection(new Dictionary<string, string?> {
                 ["MySetting"] = "test-setting"
             }).Build();
         return new HomeController(NullLogger<HomeController>.Instance, configuration);

@@ -20,6 +20,9 @@ public sealed class BrowserFixture : IAsyncLifetime
     public IBrowser Browser { get; private set; } = null!;
     public string BaseUrl { get; private set; } = null!;
 
+    public TestAppDbContext CreateDbContext() =>
+        _database?.CreateContext() ?? throw new InvalidOperationException("テスト用DBが初期化されていません。");
+
     public async Task InitializeAsync()
     {
         try

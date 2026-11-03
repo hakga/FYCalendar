@@ -8,8 +8,7 @@ namespace App.E2ETests;
 public sealed class HomePageTests(BrowserFixture fixture)
 {
     [Fact]
-    public async Task Home_ShowsWelcomeHeading()
-    {
+    public async Task ホーム画面にWelcomeが表示される() {
         await using var context = await fixture.Browser.NewContextAsync(new()
         {
             BaseURL = fixture.BaseUrl
@@ -24,8 +23,7 @@ public sealed class HomePageTests(BrowserFixture fixture)
     }
 
     [Fact]
-    public async Task Navigation_OpensPrivacyPage()
-    {
+    public async Task ナビゲーションからPrivacy画面に移動できる() {
         await using var context = await fixture.Browser.NewContextAsync(new()
         {
             BaseURL = fixture.BaseUrl

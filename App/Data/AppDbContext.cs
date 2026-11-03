@@ -236,9 +236,9 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<FiscalYear>(entity =>
         {
-            entity.HasIndex(e => e.FiscalYear1, "UQ_FiscalYears_FiscalYear").IsUnique();
+            entity.HasIndex(e => e.Year, "UQ_FiscalYears_FiscalYear").IsUnique();
 
-            entity.Property(e => e.FiscalYear1).HasColumnName("FiscalYear");
+            entity.Property(e => e.Year).HasColumnName("FiscalYear");
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)

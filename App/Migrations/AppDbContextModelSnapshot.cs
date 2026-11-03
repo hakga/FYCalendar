@@ -453,10 +453,6 @@ namespace App.Migrations
                     b.Property<DateOnly>("EndsOn")
                         .HasColumnType("date");
 
-                    b.Property<int>("FiscalYear1")
-                        .HasColumnType("int")
-                        .HasColumnName("FiscalYear");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -472,9 +468,13 @@ namespace App.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("open");
 
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("FiscalYear");
+
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "FiscalYear1" }, "UQ_FiscalYears_FiscalYear")
+                    b.HasIndex(new[] { "Year" }, "UQ_FiscalYears_FiscalYear")
                         .IsUnique();
 
                     b.ToTable("FiscalYears", "dbo", t =>

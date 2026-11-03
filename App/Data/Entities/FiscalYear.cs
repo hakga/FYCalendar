@@ -7,7 +7,7 @@ public partial class FiscalYear
 {
     public long Id { get; set; }
 
-    public int FiscalYear1 { get; set; }
+    public int Year { get; set; }
 
     public string Name { get; set; } = null!;
 
