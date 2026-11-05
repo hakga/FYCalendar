@@ -1,0 +1,46 @@
+@model IReadOnlyList<App.Models.Maintain.UserListItemViewModel>
+@{
+    ViewData["Title"] = "利用者管理";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1>利用者管理</h1>
+        <p class="text-muted mb-0">スケジュールを利用する個人の情報を管理します。</p>
+    </div>
+    <a class="btn btn-primary" asp-action="CreateUser">利用者を登録</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string message) {
+    <div class="alert alert-success" role="status">@message</div>
+}
+
+@if (Model.Count == 0) {
+    <div class="border rounded p-4 text-center">
+        <p class="mb-0">利用者が登録されていません。</p>
+    </div>
+} else {
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <caption class="visually-hidden">登録済み利用者</caption>
+            <thead>
+                <tr>
+                    <th scope="col">利用者ID</th>
+                    <th scope="col">氏名</th>
+                    <th scope="col">メールアドレス</th>
+                    <th scope="col">タイムゾーン</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model) {
+                    <tr>
+                        <th scope="row">@user.Id</th>
+                        <td>@user.Name</td>
+                        <td>@(user.Email ?? "未登録")</td>
+                        <td>@user.TimeZoneId</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

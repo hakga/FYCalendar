@@ -1,0 +1,58 @@
+@model IReadOnlyList<App.Models.Maintain.UserCalendarListItemViewModel>
+@{
+    ViewData["Title"] = "個人カレンダー";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1>個人カレンダー</h1>
+        <p class="text-muted mb-0">利用者ごとのカレンダーを管理します。</p>
+    </div>
+    <a class="btn btn-primary" asp-action="CreateUserCalendar">個人カレンダーを登録</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string message) {
+    <div class="alert alert-success" role="status">@message</div>
+}
+
+@if (Model.Count == 0) {
+    <div class="border rounded p-4 text-center">
+        <p class="mb-0">個人カレンダーが登録されていません。</p>
+    </div>
+} else {
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <caption class="visually-hidden">登録済み個人カレンダー</caption>
+            <thead>
+                <tr>
+                    <th scope="col">カレンダーID</th>
+                    <th scope="col">利用者</th>
+                    <th scope="col">カレンダー名</th>
+                    <th scope="col">種類</th>
+                    <th scope="col">タイムゾーン</th>
+                    <th scope="col">表示色</th>
+                    <th scope="col">状態</th>
+                    <th scope="col">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var calendar in Model) {
+                    <tr>
+                        <th scope="row">@calendar.Id</th>
+                        <td>@calendar.UserName（ID: @calendar.UserId）</td>
+                        <td>@calendar.Name</td>
+                        <td>@calendar.CalendarTypeLabel</td>
+                        <td>@calendar.TimeZoneId</td>
+                        <td>@(calendar.DisplayColor ?? "未指定")</td>
+                        <td>@calendar.StatusLabel</td>
+                        <td>
+                            @if (calendar.IsActive && calendar.CalendarType == "schedule") {
+                                <a asp-action="CreateEvent" asp-route-userCalendarId="@calendar.Id">予定を登録</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

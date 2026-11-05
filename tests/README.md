@@ -1,7 +1,7 @@
 # FYCalendar のテスト
 
 対象は .NET 8 / EF Core 8.0.11。テスト基盤と既存機能のスモークテストを用意しています。
-予定登録・繰り返し展開など未実装の機能のテストは、各機能の実装と一緒に追加します。
+繰り返し展開など未実装の機能のテストは、各機能の実装と一緒に追加します。
 
 ## 構成
 
@@ -111,6 +111,12 @@ Cookie・localStorageはテスト間で共有しません。DBはE2Eコレクシ
 E2Eコレクションの並列実行は無効にしています。失敗を隠すための自動スキップは行いません。
 年度画面の`FiscalYearPageTests`は各テストの前後でSQLite内の年度データを削除し、
 テストごとに独立したBrowserContextを使用します。
+利用者画面の`UserPageTests`も、各テストの前後で利用者データを削除し、
+独立したBrowserContextを使用します。
+個人カレンダー画面の`UserCalendarPageTests`は、各テストの前後で個人カレンダー、利用者の順に
+テストデータを削除します。BrowserContextもテストごとに作成します。
+予定画面の`EventPageTests`は、発生データ・日時定義・予定・個人カレンダー・利用者の順に
+テストデータを削除します。BrowserContextもテストごとに作成します。
 
 ## 初期テスト
 
@@ -122,8 +128,8 @@ E2Eコレクションの並列実行は無効にしています。失敗を隠�
 - トランザクションのロールバック。
 - Chromiumでホーム画面を表示し、Privacyへ遷移。
 
-期間検索はDBの比較処理を検証するもので、予定登録サービスの重複警告機能を実装したもの
-ではありません。警告や確定処理のテストはその機能の実装時に追加してください。
+期間検索の基盤テストではDBの比較処理を検証します。一回限りの予定登録・重複確認は、
+下記の`OneTimeEventServiceTests`と`EventPageTests`で別途検証します。
 
 ## 年度計算
 
@@ -197,6 +203,123 @@ dotnet test App.Tests/App.Tests.csproj --filter "FullyQualifiedName~FiscalYearSe
 - `App.Tests/Integration/MaintainControllerTests.cs`：日本時間の年度境界、一覧、保存、エラー表示。
 - `App.E2ETests/FiscalYearPageTests.cs`：ナビゲーション、登録、再読み込み、名称の保持、
   重複、JavaScript無効時の検証、偽造防止トークン。
+
+```powershell
+dotnet test App.Tests/App.Tests.csproj
+dotnet test App.E2ETests/App.E2ETests.csproj
+```
+
+## 利用者管理
+
+アプリを起動し、上部の「利用者管理」から一覧・登録画面を開きます。
+管理機能は`MaintainController`にまとめ、保存処理は`Domain/Services/UserService.cs`を
+ScopedでDIに登録して利用します。
+
+- `/Maintain/Users`：利用者ID・氏名・メールアドレス・タイムゾーンを登録の新しい順に表示します。
+- `/Maintain/CreateUser`：氏名・メールアドレス・タイムゾーンを指定して登録します。
+
+氏名は必須・100文字以内、メールアドレスは任意・255文字以内で形式を検証します。
+前後の空白は除去し、空のメールアドレスは`null`として保存します。
+タイムゾーンは`Asia/Tokyo`を初期値とし、実行環境で使用できるものから選択します。
+WindowsのタイムゾーンIDは可能な場合IANA IDへ変換して選択肢に表示します。
+保存時にも存在するタイムゾーンか検証し、64文字以内に制限します。
+
+既存スキーマに合わせ、同姓同名・同じメールアドレスの登録を許可し、利用者IDで区別します。
+登録日時・更新日時・RowVersionには既存DBの生成設定を使用します。
+取得結果は読み取り用で、戻り値を変更するだけでは保存されません。
+利用者サービスの各メソッドは`CancellationToken`を受け取ります。
+
+入力不正の場合は項目ごとにエラーを表示し、氏名・メールアドレスと有効なタイムゾーンの選択を保持します。
+成功時は一覧へリダイレクトし、完了メッセージを表示します。
+登録フォームは偽造防止トークンを使用し、JavaScript無効時もサーバーで検証します。
+
+- `App.Tests/Unit/CreateUserViewModelTests.cs`：必須・長さ・形式・空白除去。
+- `App.Tests/Integration/UserServiceTests.cs`：SQLiteへの保存・既定値・取得順序・入力検証・キャンセル。
+- `App.Tests/Integration/MaintainControllerTests.cs`：画面の初期値・一覧・登録・エラー時の再表示。
+- `App.E2ETests/UserPageTests.cs`：ナビゲーション・登録・メール未入力・同姓同名・入力不正・偽造防止トークン。
+
+```powershell
+dotnet test App.Tests/App.Tests.csproj
+dotnet test App.E2ETests/App.E2ETests.csproj
+```
+
+## 個人カレンダー管理
+
+上部の「個人カレンダー」から一覧・登録画面を開きます。
+`MaintainController`と、ScopedでDI登録した`Domain/Services/UserCalendarService.cs`を使用します。
+
+- `/Maintain/UserCalendars`：所有する利用者とカレンダーの設定を、登録の新しい順に表示します。
+- `/Maintain/CreateUserCalendar`：利用者・カレンダー名・タイムゾーン・表示色を指定して登録します。
+
+利用者は必須で、保存時にも存在を確認します。選択肢には氏名・利用者ID・タイムゾーンを表示し、
+同姓同名でも区別できます。利用者が未登録なら利用者登録への案内を表示します。
+カレンダー名は必須・200文字以内で、前後の空白を除去します。
+既存スキーマに合わせ、同じ利用者に同名のカレンダーを複数登録することも可能です。
+
+タイムゾーンは任意で、未指定の場合は登録時の利用者の設定をカレンダーに保存します。
+個別の指定も可能です。利用者の設定を後から変えても、保存済みのカレンダーの設定は連動しません。
+表示色は任意で、`#3788D8`のような6桁の16進数を受け付け、大文字に統一して保存します。
+空欄は`null`とします。種類は`schedule`（予定）、状態は有効で登録します。
+日時とRowVersionには既存DBの生成設定を使用します。
+
+入力不正の場合は項目にエラーを表示し、入力内容と有効な選択を保持して選択肢を再読み込みします。
+登録成功時は一覧へリダイレクトし、完了メッセージを表示します。
+フォームは偽造防止トークンを使用し、JavaScript無効時もサーバーで検証します。
+サービスの各メソッドは`CancellationToken`を受け取ります。
+
+- `App.Tests/Unit/CreateUserCalendarViewModelTests.cs`：必須・長さ・色の形式・空欄の正規化。
+- `App.Tests/Integration/UserCalendarServiceTests.cs`：所有者との関連・設定の引き継ぎ・保存・取得・入力検証。
+- `App.Tests/Integration/MaintainControllerTests.cs`：一覧・選択肢・登録・エラー時の再表示。
+- `App.E2ETests/UserCalendarPageTests.cs`：利用者登録への案内・登録・同姓同名の選択・入力不正・
+  利用者削除後の送信・偽造防止トークン。
+
+```powershell
+dotnet test App.Tests/App.Tests.csproj
+dotnet test App.E2ETests/App.E2ETests.csproj
+```
+
+## 一回限りの予定登録
+
+上部の「予定一覧」、または個人カレンダー一覧の「予定を登録」から利用できます。
+`MaintainController`と、ScopedでDI登録した`Domain/Services/OneTimeEventService.cs`を使用します。
+
+- `/Maintain/Events`：登録済みの一回限りの予定を、新しい登録から順に表示します。
+- `/Maintain/CreateEvent`：有効な予定用の個人カレンダー・件名・開始日時・終了日時・説明を入力します。
+- `/Maintain/CreateEvent?userCalendarId=...`：個人カレンダーを選択した状態で登録画面を開きます。
+
+件名は必須・300文字以内で、前後の空白を除去します。開始日時は必須、終了日時は任意です。
+日時は選択したカレンダーの現地時刻で分単位に入力し、UTCの日時に変換して保存します。
+終了未指定は実時間で1分間です。終了日時を指定する場合は開始より後にします。
+夏時間で存在しない時刻や二通りに解釈される時刻は、該当項目にエラーを表示します。
+一覧では保存時のタイムゾーンを使って現地時刻に戻します。
+
+同じ利用者が所有する有効な個人カレンダーを横断し、半開区間
+`既存の開始 < 新しい終了 && 既存の終了 > 新しい開始`で重複を確認します。
+境界で接する予定・別の利用者の予定・取消済みや下書きの予定は警告の対象外です。
+一回限りの予定は日時定義を検索するため、発生データの生成範囲外でも重複を検出できます。
+繰り返し予定については、反映済みで有効な発生データを確認します。
+
+重複がある場合はまだ保存せず、該当する予定を登録画面に表示します。
+「重複を確認して登録する」にチェックして再送信すると、再確認のうえ登録します。
+確認画面で入力内容を変更するとチェックを外します。既存の予定は保持します。
+本機能は既定優先度50、競合時の挙動`warning`で登録します。
+登録順と優先度は、今後のカレンダー表示で重なりの優先表示に利用する設計です。
+
+登録では`Events`・`EventSchedules`・対象期間内の`EventOccurrences`を同じトランザクションで保存します。
+対象期間は、現在のUTC時刻を分単位に丸めた時点から1年後までの半開区間です。
+期間と重なる予定は元の開始・終了を保って発生データを1件生成し、キーを`single`とします。
+`GenerationSource=immediate`、`ReflectionStatus=reflected`、反映日時とバージョンを記録します。
+日時定義にも`GenerationStatus=reflected`、計算済み範囲・日時・バージョンを記録します。
+対象期間外の予定も定義を保存し、現在の範囲は計算済みとして記録します。
+
+夜間処理を追加する際は、状態だけでなく`GeneratedUntil`が新しい生成範囲の末尾に届いているかも判定し、
+範囲が進んだ予定を再生成します。これにより、現在は範囲外の予定も対象に取り込めます。
+保存失敗時は3種類のデータをロールバックします。フォームは偽造防止トークンを使用します。
+
+- `App.Tests/Unit/CreateEventViewModelTests.cs`：必須・長さ・分単位・期間の入力検証。
+- `App.Tests/Integration/OneTimeEventServiceTests.cs`：1分予定・生成範囲・時差・夏時間・重複・確認・ロールバック。
+- `App.Tests/Integration/MaintainControllerTests.cs`：初期選択・現地時刻の一覧・重複確認・エラー時の再表示。
+- `App.E2ETests/EventPageTests.cs`：導線・登録・確認リセット・JavaScript無効時の検証・将来予定・偽造防止トークン。
 
 ```powershell
 dotnet test App.Tests/App.Tests.csproj

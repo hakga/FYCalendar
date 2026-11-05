@@ -15,6 +15,9 @@ public static class AppBootstrap {
         Action<IServiceCollection>? configureDatabase = null) {
         builder.Services.AddControllersWithViews();
         builder.Services.AddScoped<FiscalYearService>();
+        builder.Services.AddScoped<UserService>();
+        builder.Services.AddScoped<UserCalendarService>();
+        builder.Services.AddScoped<OneTimeEventService>();
         builder.Services.AddSingleton(TimeProvider.System);
 
         if (configureDatabase is null) {

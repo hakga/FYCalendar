@@ -1,0 +1,56 @@
+@model App.Models.Maintain.CreateUserCalendarViewModel
+@{
+    ViewData["Title"] = "個人カレンダー登録";
+}
+
+<h1>個人カレンダー登録</h1>
+<p class="text-muted">利用者とカレンダー名を指定してください。タイムゾーンと表示色は任意です。</p>
+
+@if (Model.UserOptions.Count == 0) {
+    <div class="alert alert-warning" role="alert">
+        個人カレンダーの登録には利用者が必要です。先に<a asp-action="CreateUser">利用者を登録</a>してください。
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-6">
+        <form asp-action="CreateUserCalendar" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="UserId" class="form-label"></label>
+                <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select" required>
+                    <option value="">選択してください</option>
+                </select>
+                <span asp-validation-for="UserId" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" maxlength="200" required />
+                <span asp-validation-for="Name" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TimeZoneId" class="form-label"></label>
+                <select asp-for="TimeZoneId" asp-items="Model.TimeZoneOptions" class="form-select" aria-describedby="TimeZoneHelp">
+                    <option value="">利用者のタイムゾーンを引き継ぐ</option>
+                </select>
+                <div id="TimeZoneHelp" class="form-text">未指定の場合は、登録時の利用者のタイムゾーンを設定します。</div>
+                <span asp-validation-for="TimeZoneId" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="DisplayColor" class="form-label"></label>
+                <input asp-for="DisplayColor" class="form-control" maxlength="7" pattern="#[0-9A-Fa-f]{6}" placeholder="#3788D8" aria-describedby="DisplayColorHelp" />
+                <div id="DisplayColorHelp" class="form-text">例：#3788D8。未入力でも登録できます。</div>
+                <span asp-validation-for="DisplayColor" class="text-danger" role="alert"></span>
+            </div>
+            <p class="text-muted">種類は「予定」、状態は「有効」で登録します。</p>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@(Model.UserOptions.Count == 0)">登録する</button>
+                <a asp-action="UserCalendars" class="btn btn-outline-secondary">一覧に戻る</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

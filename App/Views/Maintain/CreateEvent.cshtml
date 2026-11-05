@@ -1,0 +1,79 @@
+@model App.Models.Maintain.CreateEventViewModel
+@{
+    ViewData["Title"] = "予定登録";
+}
+
+<h1>予定登録</h1>
+<p class="text-muted">一回限りの予定を登録します。日時は選択したカレンダーのタイムゾーンで入力してください。</p>
+
+@if (Model.CalendarOptions.Count == 0) {
+    <div class="alert alert-warning" role="alert">
+        予定の登録には有効な個人カレンダーが必要です。先に<a asp-action="CreateUserCalendar">個人カレンダーを登録</a>してください。
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="CreateEvent" method="post" data-event-form>
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="UserCalendarId" class="form-label"></label>
+                <select asp-for="UserCalendarId" asp-items="Model.CalendarOptions" class="form-select" required>
+                    <option value="">選択してください</option>
+                </select>
+                <span asp-validation-for="UserCalendarId" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" maxlength="300" required />
+                <span asp-validation-for="Title" class="text-danger" role="alert"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="StartsAtLocal" class="form-label"></label>
+                    <input asp-for="StartsAtLocal" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" step="60" class="form-control" required />
+                    <span asp-validation-for="StartsAtLocal" class="text-danger" role="alert"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="EndsAtLocal" class="form-label"></label>
+                    <input asp-for="EndsAtLocal" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" step="60" class="form-control" aria-describedby="EndHelp" />
+                    <div id="EndHelp" class="form-text">未指定の場合、開始から1分間の予定になります。</div>
+                    <span asp-validation-for="EndsAtLocal" class="text-danger" role="alert"></span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            </div>
+
+            @if (Model.Conflicts.Count > 0) {
+                <div class="alert alert-warning" role="alert" data-conflict-warning>
+                    <h2 class="h5">予定が重複しています</h2>
+                    <p>同じ利用者に次の予定があります。選択したカレンダーの時刻で表示しています。</p>
+                    <ul>
+                        @foreach (var conflict in Model.Conflicts) {
+                            <li>
+                                <strong>@conflict.Title</strong>（@conflict.CalendarName）<br />
+                                @conflict.StartsAt.ToString("yyyy/MM/dd HH:mm zzz") ～ @conflict.EndsAt.ToString("yyyy/MM/dd HH:mm zzz")
+                            </li>
+                        }
+                    </ul>
+                    <div class="form-check">
+                        <input asp-for="ConfirmOverlap" class="form-check-input" />
+                        <label asp-for="ConfirmOverlap" class="form-check-label"></label>
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@(Model.CalendarOptions.Count == 0)">登録する</button>
+                <a asp-action="Events" class="btn btn-outline-secondary">一覧に戻る</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/maintain-event.js" asp-append-version="true"></script>
+}

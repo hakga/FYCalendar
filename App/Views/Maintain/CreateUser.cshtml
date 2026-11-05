@@ -1,0 +1,42 @@
+@model App.Models.Maintain.CreateUserViewModel
+@{
+    ViewData["Title"] = "利用者登録";
+}
+
+<h1>利用者登録</h1>
+<p class="text-muted">氏名とタイムゾーンを指定してください。メールアドレスは任意です。</p>
+
+<div class="row">
+    <div class="col-lg-6">
+        <form asp-action="CreateUser" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" maxlength="100" required autocomplete="name" />
+                <span asp-validation-for="Name" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" type="email" maxlength="255" autocomplete="email" aria-describedby="EmailHelp" />
+                <div id="EmailHelp" class="form-text">未入力でも登録できます。</div>
+                <span asp-validation-for="Email" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="TimeZoneId" class="form-label"></label>
+                <select asp-for="TimeZoneId" asp-items="Model.TimeZoneOptions" class="form-select" required aria-describedby="TimeZoneHelp">
+                    <option value="">選択してください</option>
+                </select>
+                <div id="TimeZoneHelp" class="form-text">利用者が使用するタイムゾーンを選択してください。</div>
+                <span asp-validation-for="TimeZoneId" class="text-danger" role="alert"></span>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">登録する</button>
+                <a asp-action="Users" class="btn btn-outline-secondary">一覧に戻る</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

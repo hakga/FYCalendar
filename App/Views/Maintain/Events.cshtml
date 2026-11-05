@@ -1,0 +1,54 @@
+@model IReadOnlyList<App.Models.Maintain.EventListItemViewModel>
+@{
+    ViewData["Title"] = "予定一覧";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1>予定一覧</h1>
+        <p class="text-muted mb-0">登録した一回限りの予定を、新しい登録から順に表示します。</p>
+    </div>
+    <a asp-action="CreateEvent" class="btn btn-primary">予定を登録</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string message) {
+    <div class="alert alert-success" role="status">@message</div>
+}
+
+@if (Model.Count == 0) {
+    <div class="border rounded p-4 text-center">
+        <p class="mb-0">予定が登録されていません。</p>
+    </div>
+} else {
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <caption class="visually-hidden">登録済みの一回限りの予定</caption>
+            <thead>
+                <tr>
+                    <th scope="col">予定ID</th>
+                    <th scope="col">利用者</th>
+                    <th scope="col">カレンダー</th>
+                    <th scope="col">件名</th>
+                    <th scope="col">開始日時</th>
+                    <th scope="col">終了日時</th>
+                    <th scope="col">タイムゾーン</th>
+                    <th scope="col">優先度</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model) {
+                    <tr>
+                        <th scope="row">@item.Id</th>
+                        <td>@item.UserName</td>
+                        <td>@item.CalendarName</td>
+                        <td>@item.Title</td>
+                        <td>@item.StartsAt.ToString("yyyy/MM/dd HH:mm")</td>
+                        <td>@item.EndsAt.ToString("yyyy/MM/dd HH:mm")</td>
+                        <td>@item.TimeZoneId</td>
+                        <td>@item.Priority</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
