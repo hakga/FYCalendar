@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using App.Models.Maintain;
+using App.Models.Calendars;
 using FluentAssertions;
 
 namespace App.Tests.Unit;

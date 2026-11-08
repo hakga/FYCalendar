@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace App.Models.Maintain;
+namespace App.Models.Calendars;
 
 public sealed class CreateUserCalendarViewModel {
     private string _name = string.Empty;
@@ -44,4 +44,8 @@ public sealed class CreateUserCalendarViewModel {
     [BindNever]
     [ValidateNever]
     public IReadOnlyList<SelectListItem> TimeZoneOptions { get; set; } = [];
+
+    [BindNever]
+    [ValidateNever]
+    public IReadOnlyList<string> NameOptions { get; set; } = [];
 }

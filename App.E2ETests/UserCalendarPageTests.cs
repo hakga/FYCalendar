@@ -33,14 +33,14 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
         var userId = await CreateUserAsync("所有者", "UTC");
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/CreateUserCalendar");
+        await page.GotoAsync("/Calendars/CreateUserCalendar");
         await page.GetByLabel("利用者", new() { Exact = true }).SelectOptionAsync(userId.ToString());
         await page.GetByLabel("カレンダー名", new() { Exact = true }).FillAsync("  業務予定  ");
         await page.GetByLabel("表示色", new() { Exact = true }).FillAsync("#aBc123");
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/UserCalendars");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/UserCalendars");
         await Expect(page.GetByRole(AriaRole.Status)).ToHaveTextAsync("「業務予定」を登録しました。");
         await using var database = fixture.CreateDbContext();
         var saved = await database.UserCalendars.SingleAsync();
@@ -57,14 +57,14 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
         var userId = await CreateUserAsync("所有者", "UTC");
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/CreateUserCalendar");
+        await page.GotoAsync("/Calendars/CreateUserCalendar");
         await page.GetByLabel("利用者", new() { Exact = true }).SelectOptionAsync(userId.ToString());
         await page.GetByLabel("カレンダー名", new() { Exact = true }).FillAsync("日本向けの予定");
         await page.GetByLabel("タイムゾーン", new() { Exact = true }).SelectOptionAsync("Asia/Tokyo");
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/UserCalendars");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/UserCalendars");
         await Expect(page.Locator("tbody tr")).ToContainTextAsync("Asia/Tokyo");
         await Expect(page.Locator("tbody tr")).ToContainTextAsync("未指定");
         await using var database = fixture.CreateDbContext();
@@ -78,14 +78,14 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
         await CreateUserAsync("同じ氏名", "Asia/Tokyo");
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/CreateUserCalendar");
+        await page.GotoAsync("/Calendars/CreateUserCalendar");
         await Expect(page.Locator("#UserId option")).ToHaveCountAsync(3);
         await page.GetByLabel("利用者", new() { Exact = true }).SelectOptionAsync(selectedUserId.ToString());
         await page.GetByLabel("カレンダー名", new() { Exact = true }).FillAsync("所有者を区別する予定");
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/UserCalendars");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/UserCalendars");
         await using var database = fixture.CreateDbContext();
         var saved = await database.UserCalendars.SingleAsync();
         Assert.Equal(selectedUserId, saved.UserId);
@@ -101,7 +101,7 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
         var userId = await CreateUserAsync("所有者");
         await using var context = await CreateBrowserContextAsync(javaScriptEnabled: false);
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/CreateUserCalendar");
+        await page.GotoAsync("/Calendars/CreateUserCalendar");
         await page.GetByLabel("利用者", new() { Exact = true }).SelectOptionAsync(selectUser ? userId.ToString() : "");
         await page.GetByLabel("カレンダー名", new() { Exact = true }).FillAsync(name);
         await page.GetByLabel("表示色", new() { Exact = true }).FillAsync(color);
@@ -122,7 +122,7 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
         var userId = await CreateUserAsync("所有者");
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/CreateUserCalendar");
+        await page.GotoAsync("/Calendars/CreateUserCalendar");
         await page.GetByLabel("利用者", new() { Exact = true }).SelectOptionAsync(userId.ToString());
         await page.GetByLabel("カレンダー名", new() { Exact = true }).FillAsync("業務予定");
         await page.GetByLabel("表示色", new() { Exact = true }).FillAsync("#123456");
@@ -144,7 +144,7 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
         var userId = await CreateUserAsync("所有者");
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/CreateUserCalendar");
+        await page.GotoAsync("/Calendars/CreateUserCalendar");
         await page.GetByLabel("利用者", new() { Exact = true }).SelectOptionAsync(userId.ToString());
         await page.GetByLabel("カレンダー名", new() { Exact = true }).FillAsync("業務予定");
         await using (var database = fixture.CreateDbContext()) {
@@ -165,7 +165,7 @@ public sealed class UserCalendarPageTests(BrowserFixture fixture) : IAsyncLifeti
     public async Task 偽造防止トークンのない個人カレンダー登録要求は拒否される() {
         await using var context = await CreateBrowserContextAsync();
 
-        var response = await context.APIRequest.PostAsync("/Maintain/CreateUserCalendar");
+        var response = await context.APIRequest.PostAsync("/Calendars/CreateUserCalendar");
 
         Assert.Equal(400, response.Status);
         await using var database = fixture.CreateDbContext();

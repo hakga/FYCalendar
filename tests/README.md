@@ -246,14 +246,17 @@ dotnet test App.E2ETests/App.E2ETests.csproj
 ## 個人カレンダー管理
 
 上部の「個人カレンダー」から一覧・登録画面を開きます。
-`MaintainController`と、ScopedでDI登録した`Domain/Services/UserCalendarService.cs`を使用します。
+`CalendarsController`と、ScopedでDI登録した`Domain/Services/UserCalendarService.cs`を使用します。
+画面は`App/Views/Calendars`、ビューモデルは`App/Models/Calendars`に配置します。
+`/Calendars`は個人カレンダー一覧へリダイレクトします。
 
-- `/Maintain/UserCalendars`：所有する利用者とカレンダーの設定を、登録の新しい順に表示します。
-- `/Maintain/CreateUserCalendar`：利用者・カレンダー名・タイムゾーン・表示色を指定して登録します。
+- `/Calendars/UserCalendars`：所有する利用者とカレンダーの設定を、登録の新しい順に表示します。
+- `/Calendars/CreateUserCalendar`：利用者・カレンダー名・タイムゾーン・表示色を指定して登録します。
 
 利用者は必須で、保存時にも存在を確認します。選択肢には氏名・利用者ID・タイムゾーンを表示し、
 同姓同名でも区別できます。利用者が未登録なら利用者登録への案内を表示します。
 カレンダー名は必須・200文字以内で、前後の空白を除去します。
+登録済みカレンダーの名前を入力候補として表示し、新しい名前も入力できます。
 既存スキーマに合わせ、同じ利用者に同名のカレンダーを複数登録することも可能です。
 
 タイムゾーンは任意で、未指定の場合は登録時の利用者の設定をカレンダーに保存します。
@@ -269,7 +272,7 @@ dotnet test App.E2ETests/App.E2ETests.csproj
 
 - `App.Tests/Unit/CreateUserCalendarViewModelTests.cs`：必須・長さ・色の形式・空欄の正規化。
 - `App.Tests/Integration/UserCalendarServiceTests.cs`：所有者との関連・設定の引き継ぎ・保存・取得・入力検証。
-- `App.Tests/Integration/MaintainControllerTests.cs`：一覧・選択肢・登録・エラー時の再表示。
+- `App.Tests/Integration/CalendarsControllerTests.cs`：一覧・選択肢・登録・エラー時の再表示。
 - `App.E2ETests/UserCalendarPageTests.cs`：利用者登録への案内・登録・同姓同名の選択・入力不正・
   利用者削除後の送信・偽造防止トークン。
 
@@ -281,11 +284,11 @@ dotnet test App.E2ETests/App.E2ETests.csproj
 ## 一回限りの予定登録
 
 上部の「予定一覧」、または個人カレンダー一覧の「予定を登録」から利用できます。
-`MaintainController`と、ScopedでDI登録した`Domain/Services/OneTimeEventService.cs`を使用します。
+`CalendarsController`と、ScopedでDI登録した`Domain/Services/OneTimeEventService.cs`を使用します。
 
-- `/Maintain/Events`：登録済みの一回限りの予定を、新しい登録から順に表示します。
-- `/Maintain/CreateEvent`：有効な予定用の個人カレンダー・件名・開始日時・終了日時・説明を入力します。
-- `/Maintain/CreateEvent?userCalendarId=...`：個人カレンダーを選択した状態で登録画面を開きます。
+- `/Calendars/Events`：登録済みの一回限りの予定を、新しい登録から順に表示します。
+- `/Calendars/CreateEvent`：有効な予定用の個人カレンダー・件名・開始日時・終了日時・説明を入力します。
+- `/Calendars/CreateEvent?userCalendarId=...`：個人カレンダーを選択した状態で登録画面を開きます。
 
 件名は必須・300文字以内で、前後の空白を除去します。開始日時は必須、終了日時は任意です。
 日時は選択したカレンダーの現地時刻で分単位に入力し、UTCの日時に変換して保存します。
@@ -318,7 +321,7 @@ dotnet test App.E2ETests/App.E2ETests.csproj
 
 - `App.Tests/Unit/CreateEventViewModelTests.cs`：必須・長さ・分単位・期間の入力検証。
 - `App.Tests/Integration/OneTimeEventServiceTests.cs`：1分予定・生成範囲・時差・夏時間・重複・確認・ロールバック。
-- `App.Tests/Integration/MaintainControllerTests.cs`：初期選択・現地時刻の一覧・重複確認・エラー時の再表示。
+- `App.Tests/Integration/CalendarsControllerTests.cs`：初期選択・現地時刻の一覧・重複確認・エラー時の再表示。
 - `App.E2ETests/EventPageTests.cs`：導線・登録・確認リセット・JavaScript無効時の検証・将来予定・偽造防止トークン。
 
 ```powershell

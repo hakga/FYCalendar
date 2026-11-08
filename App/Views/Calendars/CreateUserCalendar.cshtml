@@ -1,4 +1,4 @@
-@model App.Models.Maintain.CreateUserCalendarViewModel
+@model App.Models.Calendars.CreateUserCalendarViewModel
 @{
     ViewData["Title"] = "個人カレンダー登録";
 }
@@ -8,7 +8,7 @@
 
 @if (Model.UserOptions.Count == 0) {
     <div class="alert alert-warning" role="alert">
-        個人カレンダーの登録には利用者が必要です。先に<a asp-action="CreateUser">利用者を登録</a>してください。
+        個人カレンダーの登録には利用者が必要です。先に<a asp-controller="Maintain" asp-action="CreateUser">利用者を登録</a>してください。
     </div>
 }
 
@@ -25,7 +25,13 @@
             </div>
             <div class="mb-3">
                 <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" maxlength="200" required />
+                <input asp-for="Name" class="form-control" list="CalendarNameOptions" maxlength="200" required aria-describedby="CalendarNameHelp" />
+                <datalist id="CalendarNameOptions">
+                    @foreach (var name in Model.NameOptions) {
+                        <option value="@name"></option>
+                    }
+                </datalist>
+                <div id="CalendarNameHelp" class="form-text">登録済みの名前を候補から選べます。新しい名前も入力できます。</div>
                 <span asp-validation-for="Name" class="text-danger" role="alert"></span>
             </div>
             <div class="mb-3">

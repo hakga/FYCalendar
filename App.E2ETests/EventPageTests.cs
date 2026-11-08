@@ -34,7 +34,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         var start = Start;
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync("/Maintain/UserCalendars");
+        await page.GotoAsync("/Calendars/UserCalendars");
         await page.GetByRole(AriaRole.Link, new() { Name = "予定を登録", Exact = true }).ClickAsync();
         await Expect(page.GetByLabel("個人カレンダー", new() { Exact = true })).ToHaveValueAsync(calendarId.ToString());
         await FillEventAsync(page, "  面談  ", start);
@@ -42,7 +42,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/Events");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/Events");
         await Expect(page.GetByRole(AriaRole.Status)).ToHaveTextAsync("「面談」を登録しました。");
         await using var database = fixture.CreateDbContext();
         var entry = await database.Events.SingleAsync();
@@ -66,12 +66,12 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         var start = Start;
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync($"/Maintain/CreateEvent?userCalendarId={calendarId}");
+        await page.GotoAsync($"/Calendars/CreateEvent?userCalendarId={calendarId}");
         await FillEventAsync(page, "会議", start, start.AddHours(2));
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/Events");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/Events");
         await using var database = fixture.CreateDbContext();
         var schedule = await database.EventSchedules.SingleAsync();
         Assert.Equal(TimeSpan.FromHours(2), schedule.EndsAt - schedule.StartsAt);
@@ -84,7 +84,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         await SeedEventAsync(calendarId, "先の会議", start, start.AddHours(1));
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync($"/Maintain/CreateEvent?userCalendarId={calendarId}");
+        await page.GotoAsync($"/Calendars/CreateEvent?userCalendarId={calendarId}");
         await FillEventAsync(page, "重複する面談", start.AddMinutes(30));
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
@@ -103,7 +103,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         await page.GetByLabel("重複を確認して登録する", new() { Exact = true }).CheckAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/Events");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/Events");
         await Expect(page.Locator("tbody tr")).ToHaveCountAsync(2);
         await using var verification = fixture.CreateDbContext();
         Assert.Equal(2, await verification.Events.CountAsync());
@@ -120,7 +120,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         var start = Start;
         await using var context = await CreateBrowserContextAsync(javaScriptEnabled: false);
         var page = await context.NewPageAsync();
-        await page.GotoAsync($"/Maintain/CreateEvent?userCalendarId={calendarId}");
+        await page.GotoAsync($"/Calendars/CreateEvent?userCalendarId={calendarId}");
         await FillEventAsync(page, "面談", start);
         if (scenario == "title") await page.GetByLabel("件名", new() { Exact = true }).FillAsync("   ");
         if (scenario == "start") await page.GetByLabel("開始日時", new() { Exact = true }).FillAsync("");
@@ -141,7 +141,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         var calendarId = await CreateCalendarAsync();
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync($"/Maintain/CreateEvent?userCalendarId={calendarId}");
+        await page.GotoAsync($"/Calendars/CreateEvent?userCalendarId={calendarId}");
         await FillEventAsync(page, "面談", Start);
         await using (var database = fixture.CreateDbContext()) {
             var calendar = await database.UserCalendars.SingleAsync();
@@ -162,12 +162,12 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
         var calendarId = await CreateCalendarAsync();
         await using var context = await CreateBrowserContextAsync();
         var page = await context.NewPageAsync();
-        await page.GotoAsync($"/Maintain/CreateEvent?userCalendarId={calendarId}");
+        await page.GotoAsync($"/Calendars/CreateEvent?userCalendarId={calendarId}");
         await FillEventAsync(page, "将来の面談", Start.AddYears(2));
 
         await page.GetByRole(AriaRole.Button, new() { Name = "登録する", Exact = true }).ClickAsync();
 
-        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Maintain/Events");
+        await Expect(page).ToHaveURLAsync($"{fixture.BaseUrl}/Calendars/Events");
         await Expect(page.Locator("tbody tr")).ToContainTextAsync("将来の面談");
         await using var database = fixture.CreateDbContext();
         Assert.Equal(1, await database.EventSchedules.CountAsync());
@@ -178,7 +178,7 @@ public sealed class EventPageTests(BrowserFixture fixture) : IAsyncLifetime {
     public async Task 偽造防止トークンのない予定登録要求は拒否される() {
         await using var context = await CreateBrowserContextAsync();
 
-        var response = await context.APIRequest.PostAsync("/Maintain/CreateEvent");
+        var response = await context.APIRequest.PostAsync("/Calendars/CreateEvent");
 
         Assert.Equal(400, response.Status);
         await using var database = fixture.CreateDbContext();

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace App.Models.Maintain;
+namespace App.Models.Calendars;
 
 public sealed class CreateEventViewModel : IValidatableObject {
     private string _title = string.Empty;

@@ -1,4 +1,4 @@
-namespace App.Models.Maintain;
+namespace App.Models.Calendars;
 
 public sealed record EventListItemViewModel(
     long Id, string Title, string? Description, string UserName, string CalendarName,

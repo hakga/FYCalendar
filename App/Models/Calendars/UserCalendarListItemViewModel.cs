@@ -1,4 +1,4 @@
-namespace App.Models.Maintain;
+namespace App.Models.Calendars;
 
 public sealed class UserCalendarListItemViewModel {
     public long Id { get; init; }
