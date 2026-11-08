@@ -11,12 +11,17 @@ namespace App.Controllers;
 public sealed class CalendarsController : Controller {
     private readonly UserService _userService;
     private readonly UserCalendarService _userCalendarService;
+    private readonly TeamService _teamService;
+    private readonly TeamCalendarService _teamCalendarService;
     private readonly OneTimeEventService _oneTimeEventService;
 
     public CalendarsController(
-        UserService userService, UserCalendarService userCalendarService, OneTimeEventService oneTimeEventService) {
+        UserService userService, UserCalendarService userCalendarService,
+        TeamService teamService, TeamCalendarService teamCalendarService, OneTimeEventService oneTimeEventService) {
         _userService = userService;
         _userCalendarService = userCalendarService;
+        _teamService = teamService;
+        _teamCalendarService = teamCalendarService;
         _oneTimeEventService = oneTimeEventService;
     }
 
@@ -72,6 +77,44 @@ public sealed class CalendarsController : Controller {
     }
 
     [HttpGet]
+    public async Task<IActionResult> TeamCalendars(CancellationToken cancellationToken) {
+        var calendars = await _teamCalendarService.GetAllAsync(cancellationToken);
+        return View(calendars.Select(calendar => new TeamCalendarListItemViewModel(
+            calendar.Id, calendar.TeamId, calendar.Team.Name, calendar.Name, calendar.CalendarType,
+            calendar.TimeZoneId, calendar.DisplayColor, calendar.IsActive)).ToList());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateTeamCalendar(CancellationToken cancellationToken, long? teamId = null) {
+        var model = new CreateTeamCalendarViewModel { TeamId = teamId };
+        await PopulateTeamCalendarOptionsAsync(model, cancellationToken);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateTeamCalendar(CreateTeamCalendarViewModel model, CancellationToken cancellationToken) {
+        if (ModelState.IsValid) {
+            try {
+                var created = await _teamCalendarService.CreateAsync(
+                    model.TeamId!.Value, model.Name, model.TimeZoneId, model.DisplayColor, cancellationToken);
+                TempData["SuccessMessage"] = $"「{created.Name}」を登録しました。";
+                return RedirectToAction(nameof(TeamCalendars));
+            } catch (ArgumentException exception) when (exception.ParamName is "teamId" or "name" or "timeZoneId" or "displayColor") {
+                var (field, error) = exception.ParamName switch {
+                    "teamId" => (nameof(model.TeamId), "選択したチームが見つかりません。チームを選択し直してください。"),
+                    "name" => (nameof(model.Name), "カレンダー名を入力し、200文字以内で指定してください。"),
+                    "timeZoneId" => (nameof(model.TimeZoneId), "有効なタイムゾーンを選択してください。"),
+                    _ => (nameof(model.DisplayColor), "表示色は#に続く6桁の16進数で入力してください。")
+                };
+                ModelState.AddModelError(field, error);
+            }
+        }
+        await PopulateTeamCalendarOptionsAsync(model, cancellationToken);
+        return View(model);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Events(CancellationToken cancellationToken) {
         var schedules = await _oneTimeEventService.GetAllAsync(cancellationToken);
         var model = schedules.Select(schedule => {
@@ -110,6 +153,15 @@ public sealed class CalendarsController : Controller {
         }
         await PopulateEventOptionsAsync(model, cancellationToken);
         return View(model);
+    }
+
+    private async Task PopulateTeamCalendarOptionsAsync(CreateTeamCalendarViewModel model, CancellationToken cancellationToken) {
+        var teams = await _teamService.GetAllAsync(cancellationToken);
+        model.TeamOptions = teams.Select(team => new SelectListItem(
+            $"{team.Name}（ID: {team.Id} / {team.TimeZoneId}）", team.Id.ToString())).ToList();
+        model.TimeZoneOptions = TimeZoneSelectList.Create();
+        var calendars = await _teamCalendarService.GetAllAsync(cancellationToken);
+        model.NameOptions = calendars.Select(calendar => calendar.Name).Distinct(StringComparer.Ordinal).ToList();
     }
 
     private async Task PopulateEventOptionsAsync(CreateEventViewModel model, CancellationToken cancellationToken) {

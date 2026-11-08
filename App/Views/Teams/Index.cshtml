@@ -1,0 +1,49 @@
+@model IReadOnlyList<App.Models.Teams.TeamListItemViewModel>
+@{
+    ViewData["Title"] = "チーム";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1>チーム</h1>
+        <p class="text-muted mb-0">チームと所属するメンバーを管理します。</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">チームを登録</a>
+</div>
+
+@if (TempData["SuccessMessage"] is string message) {
+    <div class="alert alert-success" role="status">@message</div>
+}
+
+@if (Model.Count == 0) {
+    <div class="border rounded p-4 text-center">
+        <p class="mb-0">チームが登録されていません。</p>
+    </div>
+} else {
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <caption class="visually-hidden">登録済みチーム</caption>
+            <thead>
+                <tr>
+                    <th scope="col">チームID</th>
+                    <th scope="col">チーム名</th>
+                    <th scope="col">タイムゾーン</th>
+                    <th scope="col">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var team in Model) {
+                    <tr>
+                        <th scope="row">@team.Id</th>
+                        <td>@team.Name</td>
+                        <td>@team.TimeZoneId</td>
+                        <td>
+                            <a asp-action="Members" asp-route-id="@team.Id" class="me-3">メンバー管理</a>
+                            <a asp-controller="Calendars" asp-action="CreateTeamCalendar" asp-route-teamId="@team.Id">カレンダーを登録</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

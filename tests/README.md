@@ -281,6 +281,51 @@ dotnet test App.Tests/App.Tests.csproj
 dotnet test App.E2ETests/App.E2ETests.csproj
 ```
 
+## チームとチームカレンダーの管理
+
+上部の「チーム管理」と「チームカレンダー」から利用します。
+チームとメンバーは`TeamsController`、カレンダーは`CalendarsController`が担当します。
+保存処理はScopedで登録した`Domain/Services/TeamService.cs`と`TeamCalendarService.cs`で行います。
+既存の`Teams`・`TeamMembers`・`TeamCalendars`を使用し、スキーマ変更はありません。
+
+- `/Teams`：チームを登録の新しい順に表示します。
+- `/Teams/Create`：チーム名とタイムゾーンを指定して登録します。
+- `/Teams/Members/{id}`：メンバーを一覧表示し、利用者の追加・所属の解除を行います。
+- `/Calendars/TeamCalendars`：所有するチームとカレンダーの設定を一覧表示します。
+- `/Calendars/CreateTeamCalendar`：チームカレンダーを登録します。
+- `/Calendars/CreateTeamCalendar?teamId=...`：チームを選択した状態で登録画面を開きます。
+
+チーム名は必須・200文字以内で、前後の空白を除去します。
+タイムゾーンは既定で`Asia/Tokyo`とし、有効なIDのみ受け付けます。
+同名のチームも登録でき、チームIDで区別します。
+
+メンバーには登録済み利用者を追加します。選択肢には氏名・利用者ID・タイムゾーンを表示し、
+所属済みの利用者は候補から除きます。同じ利用者は複数のチームに所属できます。
+役割は`member`で登録し、加入日時にはDBの既定値を使用します。
+同じチームへの二重追加は事前確認と複合主キーで防ぎ、重複送信時も項目にエラーを表示します。
+メンバーの解除はそのチームへの所属だけを削除し、利用者や別チームの所属、カレンダーは保持します。
+チームが存在しない場合は404、解除の不正な要求は400を返します。
+追加・解除は偽造防止トークン付きのPOSTで受け付けます。
+
+チームカレンダーは、タイムゾーンが未指定なら登録時のチーム設定を引き継ぎます。
+個別指定も可能で、保存後のタイムゾーンはチーム設定の変更に連動しません。
+名前は必須・200文字以内、表示色は任意の`#RRGGBB`形式とし、大文字に統一します。
+個人カレンダーと共通の`CalendarValidation`で名前・タイムゾーン・表示色を検証します。
+登録済みのカレンダー名を入力候補に表示し、同じチームに同名のカレンダーを複数登録できます。
+種類は`schedule`、状態は有効です。メンバーがいないチームにも登録できます。
+現在の予定登録画面は個人カレンダー用で、チームカレンダーへの予定登録は今後の拡張対象です。
+
+- `App.Tests/Integration/TeamServiceTests.cs`：チームの保存・取得、複数所属、二重追加、解除の影響範囲。
+- `App.Tests/Integration/TeamCalendarServiceTests.cs`：所有者、設定の引き継ぎ・独立性、保存・入力検証。
+- `App.Tests/Integration/TeamsControllerTests.cs`：一覧・登録・メンバー操作・エラー表示・404。
+- `App.Tests/Integration/CalendarsControllerTests.cs`：チーム選択・入力候補・登録・エラー時の再表示。
+- `App.E2ETests/TeamManagementPageTests.cs`：画面間の遷移、メンバー追加・解除、カレンダー登録、
+  JavaScript無効時の検証、削除済み所有者の送信、偽造防止トークン。
+
+結合テストはケースごとに独立したSQLiteインメモリDBを使用します。
+画面テストは共有のBrowserコレクションで直列実行し、各ケースの前後で
+`TeamMembers`・`TeamCalendars`・`Teams`・`Users`を外部キーの順序に合わせて削除します。
+
 ## 一回限りの予定登録
 
 上部の「予定一覧」、または個人カレンダー一覧の「予定を登録」から利用できます。

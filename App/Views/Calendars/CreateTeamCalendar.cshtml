@@ -1,0 +1,62 @@
+@model App.Models.Calendars.CreateTeamCalendarViewModel
+@{
+    ViewData["Title"] = "チームカレンダー登録";
+}
+
+<h1>チームカレンダー登録</h1>
+<p class="text-muted">チームとカレンダー名を指定してください。タイムゾーンと表示色は任意です。</p>
+
+@if (Model.TeamOptions.Count == 0) {
+    <div class="alert alert-warning" role="alert">
+        チームカレンダーの登録にはチームが必要です。先に<a asp-controller="Teams" asp-action="Create">チームを登録</a>してください。
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-6">
+        <form asp-action="CreateTeamCalendar" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="TeamId" class="form-label"></label>
+                <select asp-for="TeamId" asp-items="Model.TeamOptions" class="form-select" required>
+                    <option value="">選択してください</option>
+                </select>
+                <span asp-validation-for="TeamId" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" list="CalendarNameOptions" maxlength="200" required aria-describedby="CalendarNameHelp" />
+                <datalist id="CalendarNameOptions">
+                    @foreach (var name in Model.NameOptions) {
+                        <option value="@name"></option>
+                    }
+                </datalist>
+                <div id="CalendarNameHelp" class="form-text">登録済みの名前を候補から選べます。新しい名前も入力できます。</div>
+                <span asp-validation-for="Name" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TimeZoneId" class="form-label"></label>
+                <select asp-for="TimeZoneId" asp-items="Model.TimeZoneOptions" class="form-select" aria-describedby="TimeZoneHelp">
+                    <option value="">チームのタイムゾーンを引き継ぐ</option>
+                </select>
+                <div id="TimeZoneHelp" class="form-text">未指定の場合は、登録時のチームのタイムゾーンを設定します。</div>
+                <span asp-validation-for="TimeZoneId" class="text-danger" role="alert"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="DisplayColor" class="form-label"></label>
+                <input asp-for="DisplayColor" class="form-control" maxlength="7" pattern="#[0-9A-Fa-f]{6}" placeholder="#3788D8" aria-describedby="DisplayColorHelp" />
+                <div id="DisplayColorHelp" class="form-text">例：#3788D8。未入力でも登録できます。</div>
+                <span asp-validation-for="DisplayColor" class="text-danger" role="alert"></span>
+            </div>
+            <p class="text-muted">種類は「予定」、状態は「有効」で登録します。</p>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@(Model.TeamOptions.Count == 0)">登録する</button>
+                <a asp-action="TeamCalendars" class="btn btn-outline-secondary">一覧に戻る</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

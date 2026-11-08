@@ -17,6 +17,8 @@ public static class AppBootstrap {
         builder.Services.AddScoped<FiscalYearService>();
         builder.Services.AddScoped<UserService>();
         builder.Services.AddScoped<UserCalendarService>();
+        builder.Services.AddScoped<TeamService>();
+        builder.Services.AddScoped<TeamCalendarService>();
         builder.Services.AddScoped<OneTimeEventService>();
         builder.Services.AddSingleton(TimeProvider.System);
 

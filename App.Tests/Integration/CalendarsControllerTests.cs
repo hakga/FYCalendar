@@ -208,11 +208,86 @@ public sealed class CalendarsControllerTests {
         (await context.Events.CountAsync()).Should().Be(0);
     }
 
+    [Fact]
+    public async Task チーム未登録のカレンダー画面は登録不可の選択肢を返す() {
+        await using var database = await SqliteTestDatabase.CreateAsync();
+        await using var context = database.CreateContext();
+
+        var result = (await CreateController(context).CreateTeamCalendar(CancellationToken.None))
+            .Should().BeOfType<ViewResult>().Subject;
+
+        var model = result.Model.Should().BeOfType<CreateTeamCalendarViewModel>().Subject;
+        model.TeamOptions.Should().BeEmpty();
+        model.TimeZoneOptions.Should().NotBeEmpty();
+        model.TimeZoneId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task チームカレンダーの登録画面は初期選択と同名チームのIDと名前候補を表示する() {
+        await using var database = await SqliteTestDatabase.CreateAsync();
+        await using var context = database.CreateContext();
+        var service = new TeamService(context);
+        var first = await service.CreateAsync("同名");
+        var second = await service.CreateAsync("同名", "UTC");
+        var calendarService = new TeamCalendarService(context);
+        await calendarService.CreateAsync(first.Id, "共有予定");
+        await calendarService.CreateAsync(second.Id, "共有予定");
+
+        var result = (await CreateController(context).CreateTeamCalendar(CancellationToken.None, first.Id))
+            .Should().BeOfType<ViewResult>().Subject;
+
+        var model = result.Model.Should().BeOfType<CreateTeamCalendarViewModel>().Subject;
+        model.TeamId.Should().Be(first.Id);
+        model.TeamOptions.Select(option => option.Value).Should().Equal(second.Id.ToString(), first.Id.ToString());
+        model.TeamOptions.Should().Contain(option => option.Text.Contains($"ID: {first.Id}"));
+        model.NameOptions.Should().Equal("共有予定");
+    }
+
+    [Fact]
+    public async Task チームカレンダー登録後は所有するチームとともに一覧に表示する() {
+        await using var database = await SqliteTestDatabase.CreateAsync();
+        await using var context = database.CreateContext();
+        var team = await new TeamService(context).CreateAsync("開発", "UTC");
+        var controller = CreateController(context);
+
+        var redirect = (await controller.CreateTeamCalendar(new CreateTeamCalendarViewModel {
+            TeamId = team.Id, Name = "共有予定", DisplayColor = "#abcdef"
+        }, CancellationToken.None)).Should().BeOfType<RedirectToActionResult>().Subject;
+
+        redirect.ActionName.Should().Be(nameof(CalendarsController.TeamCalendars));
+        var result = (await controller.TeamCalendars(CancellationToken.None)).Should().BeOfType<ViewResult>().Subject;
+        var model = result.Model.Should().BeAssignableTo<IReadOnlyList<TeamCalendarListItemViewModel>>().Subject;
+        var calendar = model.Should().ContainSingle().Subject;
+        calendar.TeamId.Should().Be(team.Id);
+        calendar.TeamName.Should().Be("開発");
+        calendar.TimeZoneId.Should().Be("UTC");
+        calendar.DisplayColor.Should().Be("#ABCDEF");
+    }
+
+    [Fact]
+    public async Task 削除済みチームのカレンダー登録は項目にエラーを表示し選択肢を再読込する() {
+        await using var database = await SqliteTestDatabase.CreateAsync();
+        await using var context = database.CreateContext();
+        var remaining = await new TeamService(context).CreateAsync("別のチーム");
+        var controller = CreateController(context);
+        var model = new CreateTeamCalendarViewModel { TeamId = long.MaxValue, Name = "共有予定", DisplayColor = "#abcdef" };
+
+        var result = (await controller.CreateTeamCalendar(model, CancellationToken.None)).Should().BeOfType<ViewResult>().Subject;
+
+        result.Model.Should().BeSameAs(model);
+        model.DisplayColor.Should().Be("#abcdef");
+        model.TeamOptions.Should().ContainSingle(option => option.Value == remaining.Id.ToString());
+        controller.ModelState[nameof(model.TeamId)]!.Errors.Should().ContainSingle();
+        (await context.TeamCalendars.CountAsync()).Should().Be(0);
+    }
+
     private static CalendarsController CreateController(AppDbContext context) {
         var httpContext = new DefaultHttpContext();
         return new CalendarsController(
             new UserService(context),
             new UserCalendarService(context),
+            new TeamService(context),
+            new TeamCalendarService(context),
             new OneTimeEventService(context,
                 new FixedTimeProvider(new DateTimeOffset(2026, 11, 3, 0, 0, 0, TimeSpan.Zero)))) {
             ControllerContext = new ControllerContext { HttpContext = httpContext },

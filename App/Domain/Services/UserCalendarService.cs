@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using App.Data;
 using App.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -14,34 +13,20 @@ public sealed class UserCalendarService(AppDbContext context) {
             throw new ArgumentOutOfRangeException(nameof(userId), "利用者を選択してください。");
         }
 
-        var normalizedName = name?.Trim();
-        if (string.IsNullOrEmpty(normalizedName) || normalizedName.Length > 200) {
-            throw new ArgumentException("カレンダー名を入力し、200文字以内で指定してください。", nameof(name));
-        }
-
-        var normalizedColor = string.IsNullOrWhiteSpace(displayColor) ? null : displayColor.Trim();
-        if (normalizedColor is not null && !Regex.IsMatch(normalizedColor, @"\A#[0-9A-Fa-f]{6}\z")) {
-            throw new ArgumentException("表示色は#に続く6桁の16進数で入力してください。", nameof(displayColor));
-        }
+        var normalizedName = CalendarValidation.NormalizeName(name);
+        var normalizedColor = CalendarValidation.NormalizeDisplayColor(displayColor);
 
         var user = await context.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == userId, cancellationToken)
             ?? throw new ArgumentException("選択した利用者が見つかりません。利用者を選択し直してください。", nameof(userId));
-        var effectiveTimeZoneId = string.IsNullOrWhiteSpace(timeZoneId) ? user.TimeZoneId : timeZoneId.Trim();
-        if (string.IsNullOrWhiteSpace(effectiveTimeZoneId) || effectiveTimeZoneId.Length > 64) {
-            throw new ArgumentException("有効なタイムゾーンを選択してください。", nameof(timeZoneId));
-        }
-        try {
-            _ = TimeZoneInfo.FindSystemTimeZoneById(effectiveTimeZoneId);
-        } catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException) {
-            throw new ArgumentException("有効なタイムゾーンを選択してください。", nameof(timeZoneId), exception);
-        }
+        var effectiveTimeZoneId = CalendarValidation.NormalizeTimeZoneId(
+            string.IsNullOrWhiteSpace(timeZoneId) ? user.TimeZoneId : timeZoneId);
 
         var calendar = new UserCalendar {
             UserId = userId,
             Name = normalizedName,
             CalendarType = "schedule",
             TimeZoneId = effectiveTimeZoneId,
-            DisplayColor = normalizedColor?.ToUpperInvariant(),
+            DisplayColor = normalizedColor,
             IsActive = true
         };
         context.UserCalendars.Add(calendar);

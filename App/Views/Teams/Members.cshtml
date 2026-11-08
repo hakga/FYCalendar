@@ -1,0 +1,75 @@
+@model App.Models.Teams.TeamMembersViewModel
+@{
+    ViewData["Title"] = "メンバー管理";
+}
+
+<h1>メンバー管理</h1>
+<p>@Model.TeamName（ID: @Model.TeamId）</p>
+
+@if (TempData["SuccessMessage"] is string message) {
+    <div class="alert alert-success" role="status">@message</div>
+}
+
+<section aria-labelledby="AddMemberHeading" class="mb-4">
+    <h2 id="AddMemberHeading" class="h4">メンバー追加</h2>
+    @if (Model.UserOptions.Count == 0) {
+        <div class="alert alert-info">
+            追加できる利用者がいません。必要に応じて<a asp-controller="Maintain" asp-action="CreateUser">利用者を登録</a>してください。
+        </div>
+    }
+    <form asp-action="AddMember" asp-route-id="@Model.TeamId" method="post" class="col-lg-6">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="UserId" class="form-label"></label>
+            <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select" required>
+                <option value="">選択してください</option>
+            </select>
+            <span asp-validation-for="UserId" class="text-danger" role="alert"></span>
+        </div>
+        <button type="submit" class="btn btn-primary" disabled="@(Model.UserOptions.Count == 0)">メンバーを追加</button>
+    </form>
+</section>
+
+<section aria-labelledby="MembersHeading" class="mb-4">
+    <h2 id="MembersHeading" class="h4">所属メンバー</h2>
+    @if (Model.Members.Count == 0) {
+        <p>メンバーが登録されていません。</p>
+    } else {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <caption class="visually-hidden">所属メンバー一覧</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">利用者ID</th>
+                        <th scope="col">氏名</th>
+                        <th scope="col">メールアドレス</th>
+                        <th scope="col">役割</th>
+                        <th scope="col">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var member in Model.Members) {
+                        <tr>
+                            <th scope="row">@member.UserId</th>
+                            <td>@member.Name</td>
+                            <td>@(member.Email ?? "未登録")</td>
+                            <td>@member.RoleLabel</td>
+                            <td>
+                                <form asp-action="RemoveMember" asp-route-id="@Model.TeamId" method="post">
+                                    <input type="hidden" name="userId" value="@member.UserId" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="@($"{member.Name}（ID: {member.UserId}）をメンバーから外す")">メンバーから外す</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<a asp-action="Index" class="btn btn-outline-secondary">チーム一覧に戻る</a>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
